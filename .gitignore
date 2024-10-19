@@ -1,0 +1,10 @@
+# Apache Airflow
+**/airflow
+# IntelliJ IDEA and PyCharm
+**/.idea/
+# Jupyter Notebook
+**/.ipynb_checkpoints/
+# Python
+**/__pycache__/
+# Virtual Environment
+**/.venv/
