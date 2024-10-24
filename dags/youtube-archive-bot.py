@@ -52,9 +52,9 @@ with DAG(dag_id="youtube-archive-bot", default_args=default_args) as pipeline:
                                       python_callable=check_feed_exists,
                                       op_kwargs={"execution_date": "{{ ds }}"})
 
-    download_videos = PythonOperator(task_id="downloader",
-                                     python_callable=downloader,
-                                     op_kwargs={"path": f"{FEED_PATH}{{{{ ds }}}}.csv"})
+    download_videos = ShortCircuitOperator(task_id="downloader",
+                                           python_callable=downloader,
+                                           op_kwargs={"path": f"{FEED_PATH}{{{{ ds }}}}.csv"})
 
     # upload_videos = PythonOperator(task_id="uploader",
     #                                  python_callable=,
