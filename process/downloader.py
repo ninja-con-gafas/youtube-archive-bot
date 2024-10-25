@@ -81,9 +81,8 @@ def download_video(engine: Engine) -> None:
 
     metadata: Table = Table('metadata', MetaData(), autoload_with=engine)
     with engine.connect() as connection:
-        rows: Sequence[Row] = connection.execute(select(([metadata.c.url, metadata.c.video_id])
-                                                                       .where(metadata.c.is_downloaded == False)
-                                                                       )).fetchall()
+        rows: Sequence[Row] = connection.execute(select(metadata.c.url, metadata.c.video_id)
+                                                 .where(metadata.c.is_downloaded == False)).fetchall()
 
         if not rows:
             print("No videos to download.")
@@ -101,7 +100,7 @@ def download_video(engine: Engine) -> None:
                                 .values(is_downloaded=True)))
             print(f"Downloaded the video {video_url} successfully.")
 
-def downloader(feed: str) -> bool:
+def downloader(feed: str) -> None:
 
     """
     Reads a CSV feed containing YouTube video URLs, filters duplicates, updates metadata and downloads videos if needed.
@@ -123,13 +122,10 @@ def downloader(feed: str) -> bool:
     engine: Engine = create_engine(f"sqlite:///{YOUTUBE_VIDEO_REPOSITORY_PATH}metadata.db")
     if not path.exists(f"{YOUTUBE_VIDEO_REPOSITORY_PATH}metadata.db"):
         create_metadata_database(engine=engine)
-    if update_metadata(engine=engine,
-                       url=filter_duplicates(engine=engine, url=url)):
-        download_video(engine=engine)
-        return True
-    else:
-        return False
-
+    update_metadata(engine=engine,
+                    url=filter_duplicates(engine=engine,
+                                          url=url.assign(video_id=lambda x: x["url"].apply(get_video_id))))
+    download_video(engine=engine)
 
 def extract_video_info(transcript: str) -> str:
 
@@ -211,7 +207,7 @@ def filter_duplicates(engine: Engine, url: DataFrame) -> DataFrame:
 
     return url[~url['video_id'].isin(existing_video_ids)]
 
-def update_metadata(engine: Engine, url: DataFrame) -> bool:
+def update_metadata(engine: Engine, url: DataFrame) -> None:
 
     """
     Updates the 'metadata' table in the database by appending metadata of new YouTube video URLs. The metadata contains:
@@ -232,7 +228,7 @@ def update_metadata(engine: Engine, url: DataFrame) -> bool:
 
     if url.empty:
         print("No data to update.")
-        return False
+        return
 
     print("Updating the metadata.")
     with engine.connect() as connection:
@@ -245,4 +241,3 @@ def update_metadata(engine: Engine, url: DataFrame) -> bool:
         .assign(is_downloaded=False, is_uploaded=False, shared_url=None)
         [['date', 'url', 'video_id', 'info', 'is_downloaded', 'is_uploaded', 'shared_url']]
          .to_sql(name="metadata", con=connection, if_exists="append", index=False, chunksize=1000))
-        return True
