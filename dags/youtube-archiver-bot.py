@@ -3,8 +3,7 @@ from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from datetime import datetime
 from os import environ, path
 from process.downloader import downloader
-# from process.uploader import uploader
-# from process.messenger import messenger
+from process.uploader import uploader
 
 default_args = {
     "owner": "airflow",
@@ -31,7 +30,7 @@ def check_feed_exists(execution_date: str) -> bool:
 
     return path.exists(f"{FEED_PATH}{execution_date}.csv")
 
-with DAG(dag_id="youtube-archive-bot", default_args=default_args) as pipeline:
+with DAG(dag_id="youtube-archiver-bot", default_args=default_args) as pipeline:
     
     """
     Automates the process of archiving YouTube videos. It reads CSV files containing YouTube video URLs to be added to 
@@ -56,12 +55,6 @@ with DAG(dag_id="youtube-archive-bot", default_args=default_args) as pipeline:
                                      python_callable=downloader,
                                      op_kwargs={"feed": f"{FEED_PATH}{{{{ ds }}}}.csv"})
 
-    # upload_videos = PythonOperator(task_id="uploader",
-    #                                  python_callable=,
-    #                                  op_kwargs={})
-    #
-    # send_messages = PythonOperator(task_id="messenger",
-    #                                  python_callable=,
-    #                                  op_kwargs={})
+    upload_videos = PythonOperator(task_id="uploader", python_callable=uploader)
 
-    check_feed >> download_videos #>> upload_videos >> send_messages
+    check_feed >> download_videos >> upload_videos

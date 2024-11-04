@@ -16,7 +16,8 @@ dependencies:
 """
 
 from datetime import date
-from google.ai import get_api_key, get_response
+from google.ai import get_response
+from google.iam import read_api_key
 from google.youtube import download_video_as_mp4, get_video_id, get_video_transcript_en
 from os import environ, path
 from pandas import DataFrame, read_csv
@@ -26,7 +27,7 @@ from sqlalchemy.engine.row import Row
 from typing import Set, Sequence
 
 DOWNLOAD_PATH = environ.get("DOWNLOAD_PATH")
-GEMINI_DEVELOPER_API_KEY_PATH = get_api_key(environ.get("GEMINI_DEVELOPER_API_KEY_PATH"))
+GEMINI_DEVELOPER_API_KEY_PATH = read_api_key(environ.get("GEMINI_DEVELOPER_API_KEY_PATH"))
 YOUTUBE_VIDEO_REPOSITORY_PATH = environ.get("YOUTUBE_VIDEO_REPOSITORY_PATH")
 
 def create_metadata_database(engine: Engine) -> None:
@@ -95,10 +96,13 @@ def download_video(engine: Engine) -> None:
                                   file_name=video_id,
                                   url=video_url)
 
-            connection.execute((update(metadata)
-                                .where(metadata.c.video_id == video_id)
-                                .values(is_downloaded=True)))
-            print(f"Downloaded the video {video_url} successfully.")
+            if path.exists(f"{DOWNLOAD_PATH}/{video_id}.mp4"):
+                connection.execute((update(metadata)
+                                    .where(metadata.c.video_id == video_id)
+                                    .values(is_downloaded=True)))
+                print(f"Downloaded the video {video_url} successfully.")
+            else:
+                print(f"Failed to download the video {video_url}.")
 
 def downloader(feed: str) -> None:
 
