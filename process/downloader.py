@@ -4,17 +4,17 @@ extracting information from transcripts and storing metadata in a SQLite databas
 Flash LLM for analyzing video transcripts and employs SQLAlchemy for database interactions.
 """
 
-from ffmpeg import probe
 from google.ai import get_response
 from google.iam import read_api_key
-from google.youtube import download_video_as_mp4, get_video_id, get_video_transcript_en
-from os import environ, path
+from google.youtube import (download_video_as_mp4, get_video_duration, get_video_id,
+                            get_video_transcript_en, is_video_corrupted)
+from os import environ, path, remove
 from pandas import DataFrame, read_csv
 from re import search
 from sqlalchemy import Boolean, create_engine, Column, DateTime, Integer, MetaData, select, String, Table, update
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.engine.row import Row
-from typing import Dict, Set, Sequence, Any
+from typing import Set, Sequence
 
 DOWNLOAD_PATH = environ.get("DOWNLOAD_PATH")
 GEMINI_DEVELOPER_API_KEY_PATH = read_api_key(environ.get("GEMINI_DEVELOPER_API_KEY_PATH"))
@@ -94,20 +94,19 @@ def download_video(engine: Engine) -> None:
 
             video_file_path: str = f"{DOWNLOAD_PATH}/{video_id}.mp4"
             if path.exists(video_file_path):
-                video_file_info: Dict[str, Any] = probe(filename=video_file_path,
-                                        v='error',
-                                        select_streams='v:0',
-                                        show_entries='stream=duration')
+                if is_video_corrupted(video_file_path=video_file_path):
+                    print(f"Corrupted video removed: {video_file_path}")
+                    remove(path=video_file_path)
+                else:
+                    file_size: int = path.getsize(filename=video_file_path)
+                    video_duration: int = int(round(get_video_duration(video_file_path=video_file_path)))
 
-                file_size: int = video_file_info.get("format").get("size")
-                video_duration: int = int(round(float(video_file_info.get("format").get("duration"))))
-
-                connection.execute((update(metadata)
-                                    .where(metadata.c.video_id == video_id)
-                                    .values(is_downloaded=True,
-                                            file_size=file_size,
-                                            video_duration=video_duration)))
-                print(f"Downloaded the video {video_url} successfully.")
+                    connection.execute((update(metadata)
+                                        .where(metadata.c.video_id == video_id)
+                                        .values(is_downloaded=True,
+                                                file_size=file_size,
+                                                video_duration=video_duration)))
+                    print(f"Downloaded the video {video_url} successfully.")
             else:
                 print(f"Failed to download the video {video_url}.")
 
