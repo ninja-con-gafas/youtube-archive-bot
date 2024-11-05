@@ -1,17 +1,19 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator, ShortCircuitOperator
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import environ, path
 from process.downloader import downloader
 from process.uploader import uploader
 
 default_args = {
-    "owner": "airflow",
-    "start_date": datetime(2024, 10, 22),
-    "schedule_interval": "@daily",
-    "depends_on_past": True,
     "catchup": True,
-    "retries": 0
+    "depends_on_past": True,
+    "execution_timeout": timedelta(hours=3),
+    "owner": "airflow",
+    "schedule_interval": "@daily",
+    "start_date": datetime(2024, 10, 22),
+    "retries": 3,
+    "retry_delay": timedelta(minutes=5)
 }
 
 FEED_PATH = environ.get("FEED_PATH")
