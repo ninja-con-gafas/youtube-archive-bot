@@ -4,10 +4,8 @@ extracting information from transcripts and storing metadata in a SQLite databas
 Flash LLM for analyzing video transcripts and employs SQLAlchemy for database interactions.
 """
 
-from google.ai import get_response
-from google.iam import read_api_key
-from google.youtube import (download_video_as_mp4, get_video_duration, get_video_id,
-                            get_video_transcript_en, is_video_corrupted)
+from ai import get_response
+from iam import read_api_key
 from os import environ, path, remove
 from pandas import DataFrame, read_csv
 from re import search
@@ -15,6 +13,8 @@ from sqlalchemy import Boolean, create_engine, Column, DateTime, Integer, MetaDa
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.engine.row import Row
 from typing import Set, Sequence
+from youtube import (download_video_as_mp4, get_video_duration, get_video_id,
+                            get_video_transcript_en, is_video_corrupted)
 
 DOWNLOAD_PATH = environ.get("DOWNLOAD_PATH")
 GEMINI_DEVELOPER_API_KEY_PATH = read_api_key(environ.get("GEMINI_DEVELOPER_API_KEY_PATH"))

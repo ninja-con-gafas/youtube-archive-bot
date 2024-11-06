@@ -18,20 +18,6 @@ default_args = {
 
 FEED_PATH = environ.get("FEED_PATH")
 
-def check_feed_exists(execution_date: str) -> bool:
-
-    """
-    Check if the CSV file for the given execution date exists.
-
-    args:
-        execution_date (str): The execution date in 'YYYY-MM-DD' format.
-
-    returns:
-        bool: True if the file exists, False otherwise.
-    """
-
-    return path.exists(f"{FEED_PATH}{execution_date}.csv")
-
 with DAG(dag_id="youtube-archiver-bot", default_args=default_args) as pipeline:
     
     """
@@ -50,8 +36,8 @@ with DAG(dag_id="youtube-archiver-bot", default_args=default_args) as pipeline:
     """
 
     check_feed = ShortCircuitOperator(task_id="check_feed_exists",
-                                      python_callable=check_feed_exists,
-                                      op_kwargs={"execution_date": "{{ ds }}"})
+                                      python_callable=path.exists,
+                                      op_kwargs={"path": f"{FEED_PATH}{{{{ ds }}}}.csv"})
 
     download_videos = PythonOperator(task_id="downloader",
                                      python_callable=downloader,

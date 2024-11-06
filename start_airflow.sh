@@ -11,7 +11,7 @@ export FEED_PATH="$YOUTUBE_VIDEO_REPOSITORY_PATH/feed/"
 export GEMINI_DEVELOPER_API_KEY_PATH="/home/atharv/Desktop/Keys/youtube-archiver-bot/gemini.key"
 export UPLOADER_BOT_SERVICE_ACCOUNT_KEY_PATH="/home/atharv/Desktop/Keys/youtube-archiver-bot/uploader.json"
 
-export PYTHONPATH="$PYTHONPATH:/home/atharv/Documents/Repositories/utilities/"
+export PYTHONPATH="$PYTHONPATH:/home/atharv/Documents/Repositories/google/"
 
 if airflow standalone & then
     echo "Airflow standalone started successfully."
